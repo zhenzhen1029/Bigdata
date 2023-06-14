@@ -849,11 +849,11 @@ df = spark.createDataFrame(rdd, schema)
 ```
 ### `createDataFrame`和`toDF`的区别
 - 参数类型：
-`createDataFrame()`: createDataFrame()方法接受两个参数，RDD和模式（schema）。模式可以使用pyspark.sql.types.StructType和pyspark.sql.types.StructField定义。
-`toDF()`: toDF()方法是在RDD上直接调用的方法，不需要显式传递模式参数。它会根据RDD的内容自动推断模式。
+    - `createDataFrame()`: createDataFrame()方法接受两个参数，RDD和模式（schema）。模式可以使用pyspark.sql.types.StructType和pyspark.sql.types.StructField定义。
+    - `toDF()`: toDF()方法是在RDD上直接调用的方法，不需要显式传递模式参数。它会根据RDD的内容自动推断模式。
 - 返回值：
-`createDataFrame()`: createDataFrame()方法返回一个DataFrame对象。
-`toDF()`: toDF()方法返回一个DataFrame对象，并且可以选择使用toDF()方法之前RDD中元素的默认列名。
+    - `createDataFrame()`: createDataFrame()方法返回一个DataFrame对象。
+    - `toDF()`: toDF()方法返回一个DataFrame对象，并且可以选择使用toDF()方法之前RDD中元素的默认列名。
 总体来说，`createDataFrame()`提供了更多灵活性，可以通过明确定义模式来创建DataFrame，而`toDF()`则更为简便，自动推断模式并根据RDD元素的默认列名进行命名。
 ```python
 from pyspark.sql import SparkSession
