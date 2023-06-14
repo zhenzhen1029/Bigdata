@@ -804,4 +804,112 @@ if __name__ == '__main__':
 * 在性能上区别：
   * map：性能低，因为每条数据都要调用一次函数
   * mapPartitions：性能高，因为每个分区调用一次函数
+## DataFrame
+      
+### 创建DataFrame：
+- 从现有数据源加载：您可以使用Spark提供的API从不同类型的数据源（如文件、数据库等）加载数据并创建DataFrame。例如，使用spark.read.csv()加载CSV文件、spark.read.json()加载JSON文件等。
+- 从RDD转换：如果您已经有一个RDD（弹性分布式数据集），可以使用toDF()方法将其转换为DataFrame。
+```python
+# 从CSV文件加载DataFrame
+df = spark.read.csv("file.csv", header=True, inferSchema=True)
 
+# 从JSON文件加载DataFrame
+df = spark.read.json("file.json")
+
+# 从RDD创建DataFrame
+rdd = spark.sparkContext.parallelize([(1, "Alice"), (2, "Bob")])
+df = rdd.toDF(["id", "name"])
+```
+### 查看和检查DataFrame：
+- show(): 用于查看DataFrame中的前几行数据，默认显示前20行。
+- printSchema(): 打印DataFrame的模式（schema），包括每列的名称和数据类型信息。
+- count(): 返回DataFrame中的行数。
+- describe(): 提供DataFrame中数值列的基本统计信息，如均值、标准差、最小值和最大值。
+```python
+    # 显示DataFrame的前n行，默认n为20
+df.show()
+
+# 打印DataFrame的模式（列名称和数据类型）
+df.printSchema()
+
+# 获取DataFrame的行数
+df.count()
+
+# 获取DataFrame中数值列的基本统计信息
+df.describe().show()
+```
+### 选择和过滤数据：
+- select(): 选择DataFrame中的列。
+- filter(): 过滤符合给定条件的行。
+- where(): 过滤符合给定条件的行，与filter()功能相同。
+- distinct(): 去除DataFrame中的重复行。
+- orderBy(): 对DataFrame按照指定列进行排序。
+```python
+# 选择特定的列
+df.select("name", "age")
+
+# 过滤满足条件的行
+df.filter(df.age > 30)
+
+# 使用where()进行条件过滤
+df.where(df.age > 30)
+```
+### 列操作：
+- withColumn(): 添加新的列或替换现有列。
+- drop(): 删除指定的列。
+- cast(): 将列转换为不同的数据类型。
+- alias(): 为列设置别名。
+```python
+ # 添加新列
+df.withColumn("new_column", df.age + 1)
+
+# 删除列
+df.drop("column_name")
+
+# 重命名列
+df.withColumnRenamed("old_column", "new_column")
+```
+### 聚合和分组：
+- groupBy(): 按照一个或多个列对DataFrame进行分组。
+- agg(): 对分组后的数据进行聚合操作，如求和、平均值、最大值等。
+- 支持的聚合函数：count()、sum()、avg()、min()、max()等。
+```python
+# 按照某一列进行分组，并计算每组的平均值
+df.groupBy("category").avg("value")
+
+# 多列分组，并计算每组的总和和最大值
+df.groupBy("col1", "col2").agg({"value": "sum", "quantity": "max"})
+```
+### 排序
+- 使用orderBy()方法按照指定的列对DataFrame进行排序
+```python
+# 按照age列升序排序
+df.orderBy("age")
+
+# 按照age列降序排序
+df.orderBy(df.age.desc())
+```
+### 加入和连接：
+- join(): 将两个DataFrame按照指定的列连接起来。
+- union(): 将两个具有相同模式的DataFrame进行合并。
+- intersect(): 获取两个DataFrame之间的交集。
+- except(): 获取第一个DataFrame相对于第二个DataFrame的差集。
+```python
+# 基于共同列连接两个DataFrame
+df1.join(df2, on="common_column")
+
+# 合并两个DataFrame，要求具有相同的结构
+df1.union(df2)
+```
+### 数据写入：
+- write.format().save(): 将DataFrame写入指定的数据源，如Parquet、CSV、JSON等。
+```python
+# 将DataFrame写入Parquet文件
+df.write.parquet("file.parquet")
+
+# 将DataFrame写入CSV文件
+df.write.csv("file.csv")
+
+# 将DataFrame写入JSON文件
+df.write.json("file.json")
+```
