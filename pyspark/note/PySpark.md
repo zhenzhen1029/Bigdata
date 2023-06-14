@@ -820,6 +820,60 @@ df = spark.read.json("file.json")
 rdd = spark.sparkContext.parallelize([(1, "Alice"), (2, "Bob")])
 df = rdd.toDF(["id", "name"])
 ```
+### 将RDD转换为DataFrame：
+- 定义RDD的结构：
+    首先，需要定义RDD的结构，也就是DataFrame的模式（schema）。可以使用pyspark.sql.types模块中的StructType和StructField来定义模式。
+```python
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType
+
+# 定义模式
+schema = StructType([
+    StructField("id", IntegerType(), True),
+    StructField("name", StringType(), True)
+])
+```
+- 创建RDD并应用模式：
+    接下来，创建RDD并应用上述定义的模式。可以使用SparkContext的parallelize()方法创建RDD，并使用toDF()方法将其转换为DataFrame。
+```python
+from pyspark import SparkContext
+from pyspark.sql import SparkSession
+
+# 创建SparkSession
+spark = SparkSession.builder.getOrCreate()
+
+# 创建RDD
+rdd = SparkContext.parallelize([(1, "Alice"), (2, "Bob")])
+
+# 应用模式，将RDD转换为DataFrame
+df = spark.createDataFrame(rdd, schema)
+```
+### `createDataFrame`和`toDF`的区别
+- 参数类型：
+`createDataFrame()`: createDataFrame()方法接受两个参数，RDD和模式（schema）。模式可以使用pyspark.sql.types.StructType和pyspark.sql.types.StructField定义。
+`toDF()`: toDF()方法是在RDD上直接调用的方法，不需要显式传递模式参数。它会根据RDD的内容自动推断模式。
+- 返回值：
+`createDataFrame()`: createDataFrame()方法返回一个DataFrame对象。
+`toDF()`: toDF()方法返回一个DataFrame对象，并且可以选择使用toDF()方法之前RDD中元素的默认列名。
+总体来说，`createDataFrame()`提供了更多灵活性，可以通过明确定义模式来创建DataFrame，而`toDF()`则更为简便，自动推断模式并根据RDD元素的默认列名进行命名。
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType
+
+spark = SparkSession.builder.getOrCreate()
+
+# 创建RDD
+rdd = spark.sparkContext.parallelize([(1, "Alice"), (2, "Bob")])
+
+# 使用createDataFrame()方法创建DataFrame，指定模式
+schema = StructType([
+    StructField("id", IntegerType(), True),
+    StructField("name", StringType(), True)
+])
+df1 = spark.createDataFrame(rdd, schema)
+
+# 使用toDF()方法创建DataFrame，自动推断模式
+df2 = rdd.toDF(["id", "name"])
+```
 ### 查看和检查DataFrame：
 - show(): 用于查看DataFrame中的前几行数据，默认显示前20行。
 - printSchema(): 打印DataFrame的模式（schema），包括每列的名称和数据类型信息。
