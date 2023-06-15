@@ -1,32 +1,158 @@
-## 开窗函数
-### ROW_NUMBER()
+## SQL
+### 三范式
+#### 第一范式（1NF）：
+数据库中的每个列都是原子的，不可再分的。每个列的值都是不可再分的基本数据类型，如整数、字符串、日期等。
+该范式消除了重复的数据项，确保每个数据项的唯一性。
+#### 第二范式（2NF）：
+在满足1NF的基础上，数据库中的每个非主键列完全依赖于主键。换句话说，每个非主键列都与主键形成完整的依赖关系。
+如果存在复合主键，则每个非主键列都必须依赖于所有主键列，而不仅仅依赖于部分主键列。
+#### 第三范式（3NF）：
+在满足2NF的基础上，数据库中的每个非主键列都不传递依赖于主键。换句话说，任何非主键列都不能依赖于其他非主键列。
+该范式通过消除传递依赖关系，确保数据的非冗余性和一致性
+
+### 优化查询语句：
+- 确保使用合适的查询条件，使用 WHERE 子句限制结果集的大小。
+- 避免使用通配符 "%" 开头的模糊查询，因为它会导致全表扫描。
+- 避免在查询中频繁使用函数，特别是在 WHERE 子句中，因为它会导致索引失效。
+- 尽量避免使用子查询，可以使用 JOIN 或其他关联方式来替代。
+- 避免多次查询相同的数据，可以使用临时表或子查询来存储查询结果，以便后续复用。
+- 避免使用 SELECT *
+- 使用 UNION ALL 替代 UNION：
+- 使用分页查询：
+
+### 开窗函数
+#### ROW_NUMBER()
 为结果集中的每一行分配一个唯一的整数值，常用于对结果集进行编号。
 ```sql
 SELECT ROW_NUMBER() OVER (ORDER BY column_name) AS row_num, column_name
 FROM table_name;
 ```
-### RANK()
+#### RANK()
 根据指定的排序顺序，为结果集中的每一行分配一个排名，如果有相同值，则会跳过下一个排名
 ```sql
 SELECT RANK() OVER (ORDER BY column_name) AS rank_num, column_name
 FROM table_name;
 ```
-### DENSE_RANK() 
+#### DENSE_RANK() 
 根据指定的排序顺序，为结果集中的每一行分配一个密集排名，如果有相同值，则会跳过下一个排名，但不会留下空缺。
 ```sql
 SELECT DENSE_RANK() OVER (ORDER BY column_name) AS dense_rank_num, column_name
 FROM table_name;
 ```
-### SUM()
+#### SUM() 累加
 ```sql
 SELECT column_name, SUM(column_name) OVER (PARTITION BY partition_column) AS total_sum
 FROM table_name;
 ```
-### AVG()
+#### AVG()
 ```sql
 SELECT column_name, AVG(column_name) OVER (PARTITION BY partition_column) AS average_value
 FROM table_name;
 ```
+## AWS
+### 跨账号IAM角色访问
+#### A账户
+- 创建一个IAM用户
+- 为用户配置允许切换到B中角色的权限
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "sts:AssumeRole",
+      "Resource": "arn:aws:iam::B-ACCOUNT-ID:role/UpdateApp"
+    }
+  ]
+}
+```
+#### B账户
+- 创建一个角色，受信任实体为其他aws账户，指定A账户的accountid
+- 权限策略给上S3存储桶的权限AmazonS3FullAccess
+- 信任关系里编辑AssumeRole
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::A-ACCOUNT-ID:root"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+```
+- 配置存储桶策略
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::A-ACCOUNT-ID:root"
+      },
+      "Action": "s3:*",
+      "Resource": [
+          "arn:aws:s3:::xxxxxx",
+          "arn:aws:s3:::xxxxxx/*"
+      ]
+    }
+  ]
+}
+```
+
+## Informatica 相关
+###优化
+- 在源和目标数据库中创建合适的索引，以加速数据的读取和写入操作。
+- 使用数据库统计信息，确保查询优化器能够生成最佳的查询执行计划。
+- 将mapping的目标分解，保留一个目标
+- 在join、agg之前排序器转换组件
+- 使用filter组件时，若过滤条件复杂，可以先使用exporession组件生成类似条件字段，然后在filter组件使用该字段过滤可大大提高性能
+
+### joiner和lookup转换组件的区别
+#### Joiner 转换：
+- Joiner 转换用于将两个或多个输入数据流连接在一起，基于指定的连接条件将它们合并成一个输出数据流。
+- Joiner 转换可以实现不同数据源之间的连接操作，类似于 SQL 中的 JOIN 操作。
+- Joiner 转换适用于连接那些在结构上相互独立的数据流，通常需要在转换之前对输入数据进行排序操作。
+- Joiner 转换支持多种连接类型，如等值连接、外连接等。
+#### Lookup 转换：
+- Lookup 转换用于在源数据集中查找匹配条件的记录，并将查找到的数据添加到目标数据流中。
+- Lookup 转换通常用于根据某个键值在查找表或参考表中查找相应的数据，并将查找到的数据合并到主数据流中。
+- Lookup 转换适用于需要从参考表或查找表中获取额外信息的情况，类似于 SQL 中的 JOIN 操作。
+- Lookup 转换支持不同的查找模式，如查询模式、更新模式、插入/更新模式等，以满足不同的数据需求。
+因此，Joiner 转换主要用于连接不同数据源之间的数据，而 Lookup 转换主要用于在源数据中查找参考表或查找表的匹配数据。它们的使用场景和功能略有不同，根据实际需求选择合适的转换组件进行数据集成和转换操作。
+## Shell 命令
+- `ls`：列出目录内容。
+示例：ls -l，显示详细信息；ls -a，显示隐藏文件。
+- `cd`：切换当前工作目录。
+示例：cd /path/to/directory，切换到指定目录；cd ..，切换到上级目录。
+- `mkdir`：创建新目录。
+示例：mkdir new_directory，创建名为 "new_directory" 的新目录。
+- `cp`：复制文件或目录。
+示例：cp file1.txt file2.txt，将 "file1.txt" 复制为 "file2.txt"。
+- `mv`：移动文件或目录，也可用于重命名。
+示例：mv file1.txt /path/to/directory，将 "file1.txt" 移动到指定目录。
+- `rm`：删除文件或目录。
+示例：rm file.txt，删除名为 "file.txt" 的文件；rm -r directory，删除名为 "directory" 的目录。
+- `touch`：创建空文件或修改文件时间戳。
+示例：touch new_file.txt，创建名为 "new_file.txt" 的空文件。
+- `cat`：查看文件内容。
+示例：cat file.txt，显示 "file.txt" 文件的内容。
+- `grep`：在文件中搜索指定的模式。
+示例：grep "pattern" file.txt，搜索文件中匹配指定模式的行。
+- `chmod`：修改文件或目录的权限。
+示例：chmod +x script.sh，给脚本 "script.sh" 添加执行权限
+- `top`：实时监控系统的进程和资源使用情况。
+示例：top
+- `ps`：查看当前系统中运行的进程。
+示例：ps aux
+- `free`：显示系统的内存使用情况。
+示例：free -h
+
+## 数仓
 ### 缓慢变化维
 缓慢变化维是指在数据仓库中，用于存储维度数据的表，它的数据会随着时间的推移而发生变化，这种变化是缓慢的，而不是瞬间发生的。
 - SCD Type 1（SCD1）：当维度数据变化时，直接覆盖原有数据，不保留历史记录。这种方法适用于不需要保留历史变化的情况，只关注当前状态的维度数据。新数据将完全替代旧数据。
@@ -78,7 +204,7 @@ FROM table_name;
 - `可更新性`：维度表通常是一个只读的表，用于存储静态的描述性属性。在数据仓库中的ETL过程负责将源系统中的数据转换和加载到维度表中。
 维度表的设计和建模需要考虑业务需求、数据分析的灵活性以及性能优化等因素。它提供了用于解释和分析事实表中度量数据的上下文信息，为数据仓库用户提供了丰富的维度分析能力。通过与事实表的关联，维度表支持复杂的查询、切片和钻取操作，从而支持业务决策和分析的需求。
 
-## 财务预提
+## 业务
 ### 1. 什么是财务预提？
 财务预提是指在财务报表中，为了符合会计准则，而在当期已发生但尚未确认的费用或收入，通过预提的方式，提前计入当期的费用或收入，从而使当期的财务报表更加准确。
 ### 2. 举例说明
